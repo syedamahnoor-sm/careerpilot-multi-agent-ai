@@ -1,0 +1,27 @@
+# Environment and local credentials
+.env
+.env.*
+!.env.example
+/.n8n/
+/credentials/
+/secrets/
+credentials.json
+credentials-*.json
+*.pem
+*.key
+
+# Local n8n data and report exports
+/executions/
+/submissions/
+/data-exports/
+/private/
+/reports/
+*.sqlite
+*.sqlite-*
+*.log
+
+# Local editor and OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,769 @@
+{
+  "name": "CareerPilot - Multi-Agent Career Advisor",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "CareerPilot - AI Career Advisor",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Current Education",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Existing Skills",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Experience / Projects",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Target Career Role",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Current Experience Level",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Beginner"
+                  },
+                  {
+                    "option": "Intermediate"
+                  },
+                  {
+                    "option": "Advanced"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Weekly Learning Hours",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Career Goal",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "27149027-c1ec-406d-87a8-2f94bf4b2fd8",
+      "name": "CareerPilot Student Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        128
+      ],
+      "webhookId": "0e79197b-20ac-4e83-985b-f5d61e130651"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Consolidate the existing completed specialist reports for {{ $('CareerPilot Student Form').first().json['Full Name'] }} targeting {{ $('CareerPilot Student Form').first().json['Target Career Role'] }}. Weekly hours maximum {{ $('CareerPilot Student Form').first().json['Weekly Learning Hours'] }}. Goal: {{ $('CareerPilot Student Form').first().json['Career Goal'] }}. \nSkills Analyst:\n{{ $('Skills Analyst').first().json.output }}\nCareer Research:\n{{ $('Career Research Agent').first().json.output }}\nSkill Gap Analyst:\n{{ $('Skill Gap Analyst').first().json.output }}\nRoadmap Planner:\n{{ $('Roadmap Planning Agent').first().json.output }}",
+        "options": {
+          "systemMessage": "You are CareerPilot's Orchestrator QA and final report editor in a DETERMINISTIC five-agent pipeline. Four distinct specialist AI Agents have already produced their outputs. Do not invent tool calls, fabricate expertise or redo specialist work. Audit upstream consistency and correct weekly schedules if they exceed the user's weekly time budget, counting learning AND projects. Return an HTML fragment, not Markdown, with safe h2/h3/p/strong/ul/li/table/tr/th/td markup. Required clear headings: Student Profile; Target Career Overview; Existing Strengths; Required Skills; Missing Skills and Priorities; Estimated Career Readiness (label subjective heuristic, never employment probability); 30-Day Roadmap; 60-Day Roadmap; 90-Day Roadmap; Recommended Portfolio Projects; Next Actionable Steps. List weeks 1-12 with per-activity hours and per-week total <= 10 for this test student, but always respect input hours for others. Three phases must be sequential Days 1-30, 31-60, 61-90. Do not invent live jobs, salaries or sources. No CSS/script. Aim for a readable report approximately 1100-1600 words. IMPORTANT CALIBRATION: Student-provided self-reports are not externally verified. Do not claim the student is already job-ready, proficient, verified, ready for employment, or will reach a full-stack threshold by Day 90 without independent evidence. Do not infer the portfolio app uses LocalStorage or lacks a backend; describe these as unverified. Avoid unsupported claims about current market demand and being highly skilled. Say the 90-day roadmap is a foundation-building plan, with hiring readiness requiring demonstrable work, interview performance, and external assessment. The learner's original weekly hour limit, not any fixed number, controls ALL plans. For uncertainty, prefer 'self-reported', 'not demonstrated', 'may', 'could'.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "a58ce341-fe0e-489d-a97d-4554ba845132",
+      "name": "CareerPilot Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3472,
+        128
+      ],
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 6500,
+          "temperature": 0.15
+        }
+      },
+      "id": "4267ea85-d900-4248-af85-4d2ba7558752",
+      "name": "CareerPilot Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2064,
+        816
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "xomZCY5mSBgRloPF",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "={{ $json.output }}"
+      },
+      "id": "63a632af-7c23-49a4-ae54-b14e2531c2ad",
+      "name": "Show Report",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        4096,
+        128
+      ],
+      "webhookId": "3f023b83-3325-4739-a372-acad3e620770"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json[\"Full Name\"] || \"\").trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "leftValue": "={{ String($json[\"Current Education\"] || \"\").trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "leftValue": "={{ String($json[\"Existing Skills\"] || \"\").trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "leftValue": "={{ String($json[\"Target Career Role\"] || \"\").trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "leftValue": "={{ Number($json[\"Weekly Learning Hours\"] || 0) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3fc5f4b7-df54-4f70-a744-076302dddf85",
+      "name": "Validate Student Profile",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        320,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "65hO15tJTLpXVpnI"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "full_name": "={{ $json[\"Full Name\"] }}",
+            "education": "={{ $json[\"Current Education\"] }}",
+            "skills": "={{ $json[\"Existing Skills\"] }}",
+            "projects": "={{ $json[\"Experience / Projects\"] || \"\" }}",
+            "target_role": "={{ $json[\"Target Career Role\"] }}",
+            "experience_level": "={{ $json[\"Current Experience Level\"] }}",
+            "weekly_hours": "={{ Number($json[\"Weekly Learning Hours\"]) }}",
+            "career_goal": "={{ $json[\"Career Goal\"] || \"\" }}"
+          },
+          "schema": [
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "education",
+              "displayName": "education",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "skills",
+              "displayName": "skills",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "projects",
+              "displayName": "projects",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "target_role",
+              "displayName": "target_role",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "experience_level",
+              "displayName": "experience_level",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "weekly_hours",
+              "displayName": "weekly_hours",
+              "type": "number",
+              "display": true
+            },
+            {
+              "id": "career_goal",
+              "displayName": "career_goal",
+              "type": "string",
+              "display": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2ab0bc49-40da-458f-9abc-7e77496e2103",
+      "name": "Save Student Submission",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "<h2>Invalid profile</h2><p>Please enter complete required fields and more than 0 weekly learning hours.</p>"
+      },
+      "id": "467d2cd7-1d9f-44c9-abdf-a91775c430a8",
+      "name": "Invalid Profile Message",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        320,
+        512
+      ],
+      "webhookId": "0d5ba98a-c016-4a35-97b5-9b41d002f9db"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "<h2>CareerPilot report unavailable</h2><p>The report could not be fully generated or verified. Your profile was saved, but no complete roadmap has been confirmed. Review the n8n execution details for Gemini rate limits or other processing errors before retrying.</p>"
+      },
+      "id": "6c579553-b276-4743-9398-ebf4f355956f",
+      "name": "AI Service Unavailable",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        3888,
+        544
+      ],
+      "webhookId": "3bbcc6f1-2718-4eae-ba63-0dfb7edeea97"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=STUDENT PROFILE\nFull Name: {{ $('CareerPilot Student Form').first().json['Full Name'] }}\nEducation: {{ $('CareerPilot Student Form').first().json['Current Education'] }}\nExisting Skills: {{ $('CareerPilot Student Form').first().json['Existing Skills'] }}\nExperience/Projects: {{ $('CareerPilot Student Form').first().json['Experience / Projects'] }}\nTarget Role: {{ $('CareerPilot Student Form').first().json['Target Career Role'] }}\nExperience Level: {{ $('CareerPilot Student Form').first().json['Current Experience Level'] }}\nWeekly Hours: {{ $('CareerPilot Student Form').first().json['Weekly Learning Hours'] }}\nCareer Goal: {{ $('CareerPilot Student Form').first().json['Career Goal'] }}",
+        "options": {
+          "systemMessage": "Role: Student Skills Analyst. Classify self-reported skills vs demonstrably evidenced projects vs merely inferred/unverified capability; academic level; strengths and uncertainties. Never invent completed technical work, professional experience or soft skills. A task app does not prove backend or database. Maximum 350 words.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "433b7efd-0608-4c9b-9333-0a5763604537",
+      "name": "Skills Analyst",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        960,
+        128
+      ],
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TARGET: {{ $('CareerPilot Student Form').first().json['Target Career Role'] }}\nLEVEL: {{ $('CareerPilot Student Form').first().json['Current Experience Level'] }}\nSKILLS EVIDENCE:\n{{ $('Skills Analyst').first().json.output }}",
+        "options": {
+          "systemMessage": "Role: Career Researcher. Use GENERAL career knowledge only, not live research. Explain essential and optional entry-level role competencies, sensible technology choices and requirements. No fabricated salaries, job postings, statistics or market evidence. Learning one database well is sufficient as a starting point. Maximum 350 words.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "d59cdb22-412e-4018-b325-0cc1b4c99fd4",
+      "name": "Career Research Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1584,
+        128
+      ],
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=SKILLS: {{ $('CareerPilot Student Form').first().json['Existing Skills'] }}\nPROJECTS: {{ $('CareerPilot Student Form').first().json['Experience / Projects'] }}\nCAREER TARGET: {{ $('CareerPilot Student Form').first().json['Target Career Role'] }}\nSKILLS ANALYST:\n{{ $('Skills Analyst').first().json.output }}\nCAREER RESEARCHER:\n{{ $('Career Research Agent').first().json.output }}",
+        "options": {
+          "systemMessage": "Role: Career Skill Gap Analyst. Compare upstream skills findings vs researched typical requirements, identify HIGH/MEDIUM/LOW priority gaps with evidence and why; nonmentioned skills are not demonstrated, not confirmed absent. Give a transparent, subjective readiness heuristic and limitations, never numerical hiring probability. Maximum 400 words.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "239d3439-179a-4b7c-9c67-0aec6f29bd27",
+      "name": "Skill Gap Analyst",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2208,
+        128
+      ],
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=STUDENT NAME: {{ $('CareerPilot Student Form').first().json['Full Name'] }}\nSKILLS: {{ $('CareerPilot Student Form').first().json['Existing Skills'] }}\nPROJECTS: {{ $('CareerPilot Student Form').first().json['Experience / Projects'] }}\nTARGET: {{ $('CareerPilot Student Form').first().json['Target Career Role'] }}\nEXPERIENCE: {{ $('CareerPilot Student Form').first().json['Current Experience Level'] }}\nHARD WEEKLY HOURS LIMIT: {{ $('CareerPilot Student Form').first().json['Weekly Learning Hours'] }}\nGOAL: {{ $('CareerPilot Student Form').first().json['Career Goal'] }}\nPRIORITIZED SKILL GAPS:\n{{ $('Skill Gap Analyst').first().json.output }}",
+        "options": {
+          "systemMessage": "Role: Roadmap Planner. Provide nonoverlapping 30-, 60-, and 90-day phases (Days 1-30, 31-60, 61-90), about 4 weeks per phase. Each of 12 weeks must show exact hours for learning/practice/project tasks and total never above the student's weekly budget, 10 in the test profile. Prioritize high-impact gaps. Include project milestones, measurable outcome, 2 portfolio ideas, next 3 steps. Do not guarantee a job. Max 700 words.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "8d64e45b-8795-4190-b734-5a8fc03214ba",
+      "name": "Roadmap Planning Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2848,
+        128
+      ],
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "60255949-bef7-431c-900d-b44f9b9d25fc",
+      "name": "Rate Limit Wait 1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        128
+      ],
+      "webhookId": "85d26236-0f68-4c06-bb98-75f26af8ac6a"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "4b8d9026-dd6a-48f5-8302-afbf7c7f4b3f",
+      "name": "Rate Limit Wait 2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1904,
+        128
+      ],
+      "webhookId": "553c283e-3c53-44a0-b664-af98e2f001bd"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "d9077130-d1bb-4edb-82a6-de6781ca42ae",
+      "name": "Rate Limit Wait 3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2528,
+        128
+      ],
+      "webhookId": "9988b0d6-f0f5-461b-915d-256e2996cd74"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "f04c49c0-7f27-4c68-9e2d-61efdeb274ae",
+      "name": "Rate Limit Wait 4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3152,
+        128
+      ],
+      "webhookId": "7ca0f143-73af-423e-84cf-dc618028a667"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output || '' }}",
+              "rightValue": "<h2>",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "leftValue": "={{ $json.output || '' }}",
+              "rightValue": "Estimated Career Readiness",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "leftValue": "={{ $json.output || '' }}",
+              "rightValue": "30-Day Roadmap",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "leftValue": "={{ $json.output || '' }}",
+              "rightValue": "60-Day Roadmap",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "leftValue": "={{ $json.output || '' }}",
+              "rightValue": "90-Day Roadmap",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "leftValue": "={{ $json.output || '' }}",
+              "rightValue": "Next Actionable Steps",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e8c15d3d-cb29-4502-81b0-b9445bcccf7c",
+      "name": "Report Quality Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        3792,
+        128
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CareerPilot Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Report Quality Gate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Service Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CareerPilot Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CareerPilot Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Skills Analyst",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Career Research Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Skill Gap Analyst",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Roadmap Planning Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CareerPilot Student Form": {
+      "main": [
+        [
+          {
+            "node": "Validate Student Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Student Profile": {
+      "main": [
+        [
+          {
+            "node": "Save Student Submission",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Profile Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Student Submission": {
+      "main": [
+        [
+          {
+            "node": "Skills Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skills Analyst": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Wait 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Service Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Wait 1": {
+      "main": [
+        [
+          {
+            "node": "Career Research Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Career Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Wait 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Service Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Wait 2": {
+      "main": [
+        [
+          {
+            "node": "Skill Gap Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skill Gap Analyst": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Wait 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Service Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Wait 3": {
+      "main": [
+        [
+          {
+            "node": "Roadmap Planning Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Roadmap Planning Agent": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Wait 4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Service Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Wait 4": {
+      "main": [
+        [
+          {
+            "node": "CareerPilot Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Quality Gate": {
+      "main": [
+        [
+          {
+            "node": "Show Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Service Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "executionTimeout": 240,
+    "saveExecutionProgress": true,
+    "saveDataSuccessExecution": "all"
+  },
+  "versionId": "e691f671-0905-47d4-8573-f6e27fc559e1",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "0982c85c58eb8dc7f661437e98d31b8f8606a04def32a04d615f596ff1817614"
+  },
+  "nodeGroups": [],
+  "id": "A3sz9Gq2oUhs7uE0",
+  "tags": []
+}
