@@ -91,10 +91,6 @@ Each agent can also route an execution error to the **Report Unavailable** respo
 4. The four specialists run in order. A 15-second wait follows each specialist, including the roadmap planner. The final orchestrator then reviews the specialist outputs and writes the HTML report.
 5. The quality gate checks for an HTML heading marker, the readiness section, all three roadmap headings, and next steps. A passing report renders in the browser. Agent errors and failed report checks return a report-unavailable response. The gate checks content markers and leaves detailed assessment of the report to the reader.
 
-## Screenshots
-
-The repository currently has no screenshots of the workflow, form, execution, report, or roadmap. See the [architecture diagram](#multi-agent-architecture) for the workflow layout and the [demonstration steps](#project-demonstration) for what to show in a live run.
-
 ## Example use case
 
 | Field | Fictional student profile |
